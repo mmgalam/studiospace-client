@@ -6,6 +6,8 @@ interface Props {
   title: string;
   message: string;
   confirmLabel: string;
+  cancelLabel?: string;
+  loadingLabel?: string;
   loading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -15,6 +17,8 @@ export default function ConfirmModal({
   title,
   message,
   confirmLabel,
+  cancelLabel = "Keep it",
+  loadingLabel = "Deleting...",
   loading,
   onConfirm,
   onCancel,
@@ -41,16 +45,16 @@ export default function ConfirmModal({
           <button
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60 cursor-pointer"
           >
-            Keep it
+            {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
             className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
           >
-            {loading ? "Deleting..." : confirmLabel}
+            {loading ? loadingLabel : confirmLabel}
           </button>
         </div>
       </div>

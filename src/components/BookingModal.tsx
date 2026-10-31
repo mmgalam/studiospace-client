@@ -51,13 +51,35 @@ export default function BookingModal({
     }
 
     setSubmitting(true);
-    // TODO: server-এ POST /api/bookings তৈরি হলে এখানে fetch বসবে
-    // body: { studioId, studioTitle, date, startTime, endTime, totalPrice, userEmail, userName, status: 'Pending' }
-    await new Promise((r) => setTimeout(r, 600));
-    setSubmitting(false);
-
-    toast.info("Booking API is not connected yet. Your request was not saved.");
-    onClose();
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/bookings`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studioId: studio._id,
+            date,
+            startTime,
+            endTime,
+            userEmail: session.user.email,
+            userName: session.user.name,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message ?? "Could not complete the booking.");
+        return;
+      }
+      toast.success("Booking request sent! The host will confirm shortly.");
+      onClose();
+      router.push("/my-bookings");
+    } catch {
+      toast.error("Could not reach the server. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const input =
@@ -65,7 +87,7 @@ export default function BookingModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4"
+      className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
