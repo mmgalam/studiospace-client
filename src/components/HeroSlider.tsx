@@ -37,7 +37,7 @@ export default function HeroSlider() {
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         pagination={{ clickable: true }}
         loop
-        className="h-[70vh] min-h-[480px]"
+        className="h-[70vh] min-h-120"
       >
         {slides.map((s) => (
           <SwiperSlide key={s.title}>
