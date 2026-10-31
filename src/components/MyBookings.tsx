@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FiCalendar, FiClock, FiMapPin } from "react-icons/fi";
 import { authClient } from "@/lib/auth-client";
+import { apiFetch } from "@/lib/api";
 import ConfirmModal from "./ConfirmModal";
 import type { Booking } from "@/lib/types";
 
@@ -30,12 +31,7 @@ export default function MyBookings() {
     if (!email) return;
     const controller = new AbortController();
 
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/my-bookings?email=${encodeURIComponent(email)}`,
-      {
-        signal: controller.signal,
-      },
-    )
+    apiFetch("/my-bookings", { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error("Failed");
         return res.json();
@@ -54,17 +50,12 @@ export default function MyBookings() {
   }, [email]);
 
   const handleCancel = async () => {
-    if (!target || !email) return;
+    if (!target) return;
     setCancelling(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/bookings/${target._id}/cancel`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        },
-      );
+      const res = await apiFetch(`/bookings/${target._id}/cancel`, {
+        method: "PATCH",
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.message ?? "Could not cancel the booking.");

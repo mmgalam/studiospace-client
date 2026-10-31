@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FiX } from "react-icons/fi";
 import { authClient } from "@/lib/auth-client";
+import { apiFetch } from "@/lib/api";
 import type { Studio } from "@/lib/types";
+
+const toMinutes = (t: string) =>
+  Number(t.split(":")[0]) * 60 + Number(t.split(":")[1]);
 
 export default function BookingModal({
   studio,
@@ -25,11 +29,7 @@ export default function BookingModal({
 
   const hours =
     startTime && endTime && endTime > startTime
-      ? (Number(endTime.split(":")[0]) * 60 +
-          Number(endTime.split(":")[1]) -
-          (Number(startTime.split(":")[0]) * 60 +
-            Number(startTime.split(":")[1]))) /
-        60
+      ? (toMinutes(endTime) - toMinutes(startTime)) / 60
       : 0;
   const total = hours * studio.hourlyRate;
 
@@ -52,21 +52,16 @@ export default function BookingModal({
 
     setSubmitting(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/bookings`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studioId: studio._id,
-            date,
-            startTime,
-            endTime,
-            userEmail: session.user.email,
-            userName: session.user.name,
-          }),
-        },
-      );
+      const res = await apiFetch("/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studioId: studio._id,
+          date,
+          startTime,
+          endTime,
+        }),
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.message ?? "Could not complete the booking.");

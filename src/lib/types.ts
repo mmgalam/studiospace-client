@@ -27,4 +27,6 @@ export interface Booking {
   totalPrice: number;
   securityDeposit: number;
   status: "Pending" | "Confirmed" | "Completed" | "Cancelled";
+  userName: string;
+  userEmail: string;
 }

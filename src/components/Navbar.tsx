@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { clearToken } from "@/lib/api";
 import {
   FiAperture,
   FiSun,
@@ -22,6 +23,7 @@ import {
   FiMenu,
   FiX,
   FiGrid,
+  FiInbox,
 } from "react-icons/fi";
 
 const navLinks = [
@@ -36,6 +38,7 @@ const menuItems = [
   { label: "Add New Studio", href: "/add-studio", icon: FiPlusCircle },
   { label: "My Studio Listings", href: "/my-listings", icon: FiLayers },
   { label: "My Bookings", href: "/my-bookings", icon: FiBookmark },
+  { label: "Booking Requests", href: "/booking-requests", icon: FiInbox },
 ];
 
 const subscribe = () => () => {};
@@ -92,6 +95,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
+      await clearToken(); // server-এর JWT cookie মোছা
       await authClient.signOut();
       closeMenus();
       toast.success("You have been logged out successfully.");

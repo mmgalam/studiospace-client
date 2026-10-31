@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FiUploadCloud, FiX } from "react-icons/fi";
 import { authClient } from "@/lib/auth-client";
+import { apiFetch } from "@/lib/api";
 
 const categories = [
   "Photo Studio",
@@ -117,20 +118,15 @@ export default function AddStudioForm() {
       image,
       amenities,
       overview: String(form.get("overview")),
-      ownerName: session.user.name,
-      ownerEmail: session.user.email,
     };
 
     setSubmitting(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/studios`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      const res = await apiFetch("/studios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.message ?? "Could not save the studio.");

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FiEdit2, FiTrash2, FiMapPin } from "react-icons/fi";
 import { authClient } from "@/lib/auth-client";
+import { apiFetch } from "@/lib/api";
 import StudioCardSkeleton from "./StudioCardSkeleton";
 import ConfirmModal from "./ConfirmModal";
 import type { Studio } from "@/lib/types";
@@ -23,12 +24,7 @@ export default function MyListings() {
     if (!email) return;
     const controller = new AbortController();
 
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/my-studios?email=${encodeURIComponent(email)}`,
-      {
-        signal: controller.signal,
-      },
-    )
+    apiFetch("/my-studios", { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error("Failed");
         return res.json();
@@ -47,13 +43,12 @@ export default function MyListings() {
   }, [email]);
 
   const handleDelete = async () => {
-    if (!target || !email) return;
+    if (!target) return;
     setDeleting(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/studios/${target._id}?email=${encodeURIComponent(email)}`,
-        { method: "DELETE" },
-      );
+      const res = await apiFetch(`/studios/${target._id}`, {
+        method: "DELETE",
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.message ?? "Could not delete the studio.");

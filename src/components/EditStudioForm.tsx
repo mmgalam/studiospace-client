@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FiUploadCloud, FiX } from "react-icons/fi";
 import { authClient } from "@/lib/auth-client";
+import { apiFetch } from "@/lib/api";
 import type { Studio } from "@/lib/types";
 
 const categories = [
@@ -42,7 +43,7 @@ export default function EditStudioForm({ id }: { id: string }) {
   const [customAmenity, setCustomAmenity] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // বর্তমান studio-র তথ্য আনা
+  // বর্তমান studio-র তথ্য আনা (পাবলিক GET)
   useEffect(() => {
     const controller = new AbortController();
 
@@ -148,19 +149,15 @@ export default function EditStudioForm({ id }: { id: string }) {
       image,
       amenities,
       overview: String(form.get("overview")),
-      email: session.user.email,
     };
 
     setSubmitting(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/studios/${id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      const res = await apiFetch(`/studios/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.message ?? "Could not update the studio.");
@@ -196,7 +193,7 @@ export default function EditStudioForm({ id }: { id: string }) {
     );
   }
 
-  // মালিক না হলে সম্পাদনা নিষিদ্ধ (UI স্তরে; আসল সুরক্ষা server-এ)
+  // UI স্তরের পরীক্ষা; আসল সুরক্ষা server-এ
   if (session?.user.email !== studio.ownerEmail) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
