@@ -8,6 +8,8 @@ import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api";
 import ConfirmModal from "./ConfirmModal";
 import type { Booking } from "@/lib/types";
+import { FiDownload } from "react-icons/fi";
+import { downloadInvoice } from "@/lib/invoice";
 
 const badgeStyle: Record<Booking["status"], string> = {
   Pending: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
@@ -170,6 +172,25 @@ export default function MyBookings() {
                       className="rounded-lg border border-red-300 dark:border-red-800 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
                     >
                       Cancel Booking
+                    </button>
+                  )}
+                  {(b.status === "Confirmed" || b.status === "Completed") && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await downloadInvoice(
+                            b,
+                            session?.user.name ?? "Guest",
+                            session?.user.email ?? "",
+                          );
+                          toast.success("Invoice downloaded.");
+                        } catch {
+                          toast.error("Could not generate the invoice.");
+                        }
+                      }}
+                      className="flex items-center gap-2 rounded-lg border border-indigo-300 dark:border-indigo-800 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 cursor-pointer"
+                    >
+                      <FiDownload className="h-4 w-4" /> Invoice
                     </button>
                   )}
                 </div>
