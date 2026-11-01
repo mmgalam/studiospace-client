@@ -129,7 +129,8 @@ export default function StudiosExplorer() {
               Explore Studios
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl">
-              Discover, compare, and reserve cyclorama stages, podcast suites, and audio booths with conflict-free scheduling[cite: 1].
+              Discover, compare, and reserve cyclorama stages, podcast suites,
+              and audio booths with conflict-free scheduling[cite: 1].
             </p>
           </div>
 
@@ -144,7 +145,10 @@ export default function StudiosExplorer() {
 
         {/* Search & Sort Bar */}
         <div className="flex flex-col sm:flex-row items-stretch gap-3">
-          <form onSubmit={handleSearch} className="flex-1 relative flex items-center">
+          <form
+            onSubmit={handleSearch}
+            className="flex-1 relative flex items-center"
+          >
             <FiSearch className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
@@ -188,7 +192,11 @@ export default function StudiosExplorer() {
               aria-label="Sort studios"
             >
               {sortOptions.map((o) => (
-                <option key={o.value} value={o.value} className="dark:bg-slate-900">
+                <option
+                  key={o.value}
+                  value={o.value}
+                  className="dark:bg-slate-900"
+                >
                   {o.label}
                 </option>
               ))}
@@ -253,7 +261,8 @@ export default function StudiosExplorer() {
               Failed to load studios
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Could not retrieve listings from the server. Please check your connection and try again.
+              Could not retrieve listings from the server. Please check your
+              connection and try again.
             </p>
             <button
               onClick={() => window.location.reload()}
@@ -272,7 +281,8 @@ export default function StudiosExplorer() {
                 No studios matched your filters
               </h2>
               <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                Try searching with a different studio keyword or browse another category.
+                Try searching with a different studio keyword or browse another
+                category.
               </p>
             </div>
             <div className="pt-2 flex flex-wrap justify-center gap-3">
