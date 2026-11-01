@@ -1,8 +1,13 @@
+"use client";
 import Link from "next/link";
 import { FiMapPin, FiStar } from "react-icons/fi";
 import type { Studio } from "@/lib/types";
+import { FiHeart } from "react-icons/fi";
+import { useWishlist } from "./WishlistProvider";
 
 export default function StudioCard({ studio }: { studio: Studio }) {
+  const { ids, toggle } = useWishlist();
+  const saved = ids.includes(studio._id);
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-lg transition">
       <div className="relative h-52 w-full">
@@ -19,6 +24,16 @@ export default function StudioCard({ studio }: { studio: Studio }) {
           <FiStar className="h-3.5 w-3.5 text-amber-500" />
           {studio.rating.toFixed(1)}
         </span>
+        <button
+          type="button"
+          onClick={() => toggle(studio._id)}
+          aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
+          className="absolute right-3 top-12 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 cursor-pointer"
+        >
+          <FiHeart
+            className={`h-4 w-4 ${saved ? "fill-red-500 text-red-500" : "text-slate-600 dark:text-slate-300"}`}
+          />
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col p-5">

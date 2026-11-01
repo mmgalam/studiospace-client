@@ -24,6 +24,7 @@ import {
   FiX,
   FiGrid,
   FiInbox,
+  FiHeart,
 } from "react-icons/fi";
 
 const navLinks = [
@@ -39,6 +40,7 @@ const menuItems = [
   { label: "My Studio Listings", href: "/my-listings", icon: FiLayers },
   { label: "My Bookings", href: "/my-bookings", icon: FiBookmark },
   { label: "Booking Requests", href: "/booking-requests", icon: FiInbox },
+  { label: "Saved Studios", href: "/wishlist", icon: FiHeart },
 ];
 
 const subscribe = () => () => {};

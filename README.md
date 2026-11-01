@@ -1,6 +1,6 @@
 # StudioSpace
 
-**Live site:** [ডিপ্লয়ের পরে live URL বসান]
+**Live site:** https://studiospace-client-pi.vercel.app
 **Server repo:** https://github.com/mmgalam/studiospace-server
 
 StudioSpace is a peer-to-peer marketplace where creators discover, filter and reserve photo studios, sound stages, podcast lounges, music suites and art workshops by the hour, while hosts list and manage their own spaces.
