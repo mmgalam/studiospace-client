@@ -1,11 +1,49 @@
 @import "tailwindcss";
 
+/* ===================================================
+   ১. ডার্ক মোড ভ্যারিয়েন্ট কনফিগারেশন (next-themes)
+   =================================================== */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ===================================================
+   ২. রুট ভেরিয়েবল ও কালার টোকেন (Light & Dark Mode)
+   =================================================== */
+:root {
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #0f172a; /* slate-900 */
+}
 
+.dark {
+  --background: #020617; /* slate-950 */
+  --foreground: #f8fafc; /* slate-50 */
+}
+
+/* ===================================================
+   ৩. বেস বডি ও স্মুথ স্ক্রলিং
+   =================================================== */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* ===================================================
+   ৪. কাস্টম অ্যানিমেশন ও গ্রেডিয়েন্ট ইউটিলিটি
+   =================================================== */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-up {
@@ -19,4 +57,82 @@
   color: transparent;
 }
 
-html { scroll-behavior: smooth; }
+/* গ্লাস-মরফিজম হেল্পার */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.65);
+}
+
+/* ===================================================
+   ৫. মডার্ন স্লিম স্ক্রলবার
+   =================================================== */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* অনুভূমিক স্ক্রলবারের অতিরিক্ত বার লুকানোর জন্য */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ===================================================
+   ৬. Swiper.js স্লাইডার কাস্টমাইজেশন (Hero & Gallery)
+   =================================================== */
+.swiper-pagination-bullet {
+  background: #ffffff !important;
+  opacity: 0.55;
+  width: 8px;
+  height: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swiper-pagination-bullet-active {
+  background: #6366f1 !important; /* Indigo 500 */
+  opacity: 1 !important;
+  width: 24px !important;
+  border-radius: 9999px !important;
+}
+
+/* সুইপারের ডিফল্ট নেভিগেশন অ্যারো কালার রিস্টোর */
+.swiper-button-next,
+.swiper-button-prev {
+  color: #ffffff !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}

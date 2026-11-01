@@ -6,6 +6,7 @@ export interface Studio {
   securityDeposit: number;
   maxCapacity: number;
   location: string;
+  images?: string[];
   image: string;
   amenities: string[];
   overview: string;

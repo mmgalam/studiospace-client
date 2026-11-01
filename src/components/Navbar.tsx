@@ -25,6 +25,7 @@ import {
   FiGrid,
   FiInbox,
   FiHeart,
+  FiChevronDown,
 } from "react-icons/fi";
 
 const navLinks = [
@@ -52,7 +53,6 @@ export default function Navbar() {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
-  // server-এ false, client-এ true (effect-এর ভেতরে setState ছাড়াই)
   const mounted = useSyncExternalStore(
     subscribe,
     () => true,
@@ -63,7 +63,6 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // বাইরে ক্লিক বা Escape চাপলে মেনু বন্ধ
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (
@@ -97,7 +96,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await clearToken(); // server-এর JWT cookie মোছা
+      await clearToken();
       await authClient.signOut();
       closeMenus();
       toast.success("You have been logged out successfully.");
@@ -108,124 +107,155 @@ export default function Navbar() {
     }
   };
 
-  const linkClass = (href: string) =>
-    `relative text-sm font-medium transition-colors py-1 ${
-      isActive(href)
-        ? "text-indigo-600 dark:text-indigo-400 after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-full after:bg-indigo-600 dark:after:bg-indigo-400"
-        : "text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400"
-    }`;
-
-  const itemClass =
-    "flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800";
-
   const isDark = resolvedTheme === "dark";
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/75 dark:bg-slate-950/75 border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        {/* Brand Logo */}
         <Link
           href="/"
           onClick={closeMenus}
-          className="flex items-center gap-2 text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400"
+          className="group flex items-center gap-2.5 text-xl font-black tracking-tight text-slate-900 dark:text-white"
         >
-          <FiAperture className="w-6 h-6" />
-          <span>StudioSpace</span>
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-600/25 group-hover:scale-105 group-hover:rotate-12 transition-all duration-300">
+            <FiAperture className="w-5 h-5" />
+          </div>
+          <span className="bg-linear-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-indigo-200 dark:to-slate-300 bg-clip-text text-transparent">
+            StudioSpace
+          </span>
         </Link>
 
-        {/* Desktop links */}
-        <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={closeMenus}
-              className={linkClass(item.href)}
-            >
-              {item.label}
-            </Link>
-          ))}
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-1.5 p-1 rounded-full border border-slate-200/70 dark:border-slate-800/70 bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-md">
+          {navLinks.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeMenus}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${
+                  active
+                    ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
+        {/* Action Controls & Profile Area */}
         <div className="flex items-center gap-3">
-          {/* Theme toggle */}
+          {/* Theme Toggle Button */}
           {mounted ? (
             <button
               type="button"
               onClick={() => setTheme(isDark ? "light" : "dark")}
-              className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="w-10 h-10 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center justify-center transition-all duration-200 cursor-pointer"
               aria-label="Toggle theme"
             >
               {isDark ? (
-                <FiSun className="w-4 h-4 text-amber-400" />
+                <FiSun className="w-4 h-4 text-amber-400 transition-transform duration-300 hover:rotate-90" />
               ) : (
-                <FiMoon className="w-4 h-4 text-slate-700" />
+                <FiMoon className="w-4 h-4 text-slate-700 transition-transform duration-300 hover:-rotate-12" />
               )}
             </button>
           ) : (
-            <div className="w-9 h-9" />
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
           )}
 
-          {/* Auth area */}
+          {/* User Auth Section */}
           {isPending ? (
-            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+            <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
           ) : user ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setDropdownOpen((o) => !o)}
-                className="flex items-center p-0.5 rounded-full border border-slate-300 dark:border-slate-700 cursor-pointer"
+                className="group flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-200 cursor-pointer shadow-sm"
                 aria-haspopup="menu"
                 aria-expanded={dropdownOpen}
               >
-                {user.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.image}
-                    alt={user.name ?? "User avatar"}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold">
-                    {(user.name ?? user.email ?? "U").charAt(0).toUpperCase()}
-                  </span>
-                )}
+                <div className="relative">
+                  {user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.image}
+                      alt={user.name ?? "User avatar"}
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500/20"
+                    />
+                  ) : (
+                    <span className="w-8 h-8 rounded-full bg-linear-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center text-xs font-bold shadow-inner">
+                      {(user.name ?? user.email ?? "U").charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+                </div>
+
+                <FiChevronDown
+                  className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${
+                    dropdownOpen ? "rotate-180 text-indigo-600" : ""
+                  }`}
+                />
               </button>
 
+              {/* Elevated Dropdown Menu */}
               {dropdownOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-2"
+                  className="absolute right-0 mt-3 w-64 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
                 >
-                  <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                    <p className="text-sm font-semibold truncate">
+                  {/* User Profile Header */}
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                       {user.name}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                       {user.email}
                     </p>
+                    <span className="inline-block mt-2 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                      Creator Account
+                    </span>
                   </div>
-                  {menuItems.map(({ label, href, icon: Icon }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={closeMenus}
-                      className={`${itemClass} ${
-                        isActive(href)
-                          ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
-                          : ""
-                      }`}
+
+                  {/* Menu List */}
+                  <div className="py-2">
+                    {menuItems.map(({ label, href, icon: Icon }) => {
+                      const active = isActive(href);
+                      return (
+                        <Link
+                          key={href}
+                          href={href}
+                          onClick={closeMenus}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-all duration-150 ${
+                            active
+                              ? "bg-indigo-50/80 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400 font-semibold"
+                              : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:translate-x-1"
+                          }`}
+                        >
+                          <Icon
+                            className={`w-4 h-4 ${active ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400"}`}
+                          />
+                          <span>{label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Logout Button */}
+                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50/70 dark:hover:bg-rose-950/30 text-left transition-colors cursor-pointer"
                     >
-                      <Icon className="w-4 h-4" /> {label}
-                    </Link>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 text-left cursor-pointer"
-                  >
-                    <FiLogOut className="w-4 h-4" /> Logout
-                  </button>
+                      <FiLogOut className="w-4 h-4" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -233,24 +263,24 @@ export default function Navbar() {
             <div className="hidden sm:flex items-center gap-2">
               <Link
                 href="/login"
-                className="px-4 py-2 text-sm font-medium hover:text-indigo-600"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
               >
-                Login
+                Log In
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all duration-200"
               >
-                Register
+                Get Started
               </Link>
             </div>
           )}
 
-          {/* Mobile menu button */}
+          {/* Mobile Menu Hamburger Button */}
           <button
             type="button"
             onClick={() => setMobileOpen((o) => !o)}
-            className="md:hidden p-2 rounded-lg border border-slate-200 dark:border-slate-800 cursor-pointer"
+            className="md:hidden w-10 h-10 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 flex items-center justify-center text-slate-700 dark:text-slate-300 cursor-pointer"
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
           >
@@ -263,38 +293,48 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile panel */}
+      {/* Modern Mobile Navigation Panel */}
       {mobileOpen && (
-        <nav className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 flex flex-col gap-3">
-          {navLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={closeMenus}
-              className={`${linkClass(item.href)} w-fit`}
-            >
-              {item.label}
-            </Link>
-          ))}
+        <div className="md:hidden border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl px-4 py-5 space-y-4">
+          <nav className="flex flex-col gap-1.5">
+            {navLinks.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenus}
+                  className={`px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    active
+                      ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
           {!user && !isPending && (
-            <div className="flex gap-2 pt-2 sm:hidden">
+            <div className="flex items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
               <Link
                 href="/login"
                 onClick={closeMenus}
-                className="flex-1 text-center px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-700 rounded-lg"
+                className="flex-1 text-center py-2.5 text-xs font-semibold border border-slate-200 dark:border-slate-800 rounded-xl"
               >
-                Login
+                Log In
               </Link>
               <Link
                 href="/register"
                 onClick={closeMenus}
-                className="flex-1 text-center px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg"
+                className="flex-1 text-center py-2.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-600/20"
               >
                 Register
               </Link>
             </div>
           )}
-        </nav>
+        </div>
       )}
     </header>
   );

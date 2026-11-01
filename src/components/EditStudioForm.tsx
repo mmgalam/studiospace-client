@@ -3,7 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FiUploadCloud, FiX } from "react-icons/fi";
+import {
+  FiUploadCloud,
+  FiX,
+  FiCheck,
+  FiImage,
+  FiMapPin,
+  FiDollarSign,
+  FiShield,
+  FiUsers,
+  FiTag,
+  FiUser,
+  FiMail,
+  FiArrowRight,
+  FiEdit3,
+  FiAlertCircle,
+  FiPlus,
+} from "react-icons/fi";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api";
 import type { Studio } from "@/lib/types";
@@ -31,7 +47,8 @@ const defaultAmenities = [
 
 export default function EditStudioForm({ id }: { id: string }) {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
 
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,20 +60,24 @@ export default function EditStudioForm({ id }: { id: string }) {
   const [customAmenity, setCustomAmenity] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // বর্তমান studio-র তথ্য আনা (পাবলিক GET)
   useEffect(() => {
+    if (!id) return;
     const controller = new AbortController();
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/studios/${id}`, {
-      signal: controller.signal,
-    })
-      .then((res) => {
+    const fetchUrl = process.env.NEXT_PUBLIC_API_URL
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/studios/${id}`
+      : `/api/studios/${id}`;
+
+    fetch(fetchUrl, { signal: controller.signal })
+      .then(async (res) => {
         if (!res.ok) throw new Error("Studio not found");
         return res.json();
       })
-      .then((data: Studio) => {
+      .then((data: Studio & { images?: string[] }) => {
         setStudio(data);
-        setImage(data.image);
+        const resolvedImage =
+          data.image || (Array.isArray(data.images) && data.images[0]) || "";
+        setImage(resolvedImage);
         setAmenities(data.amenities ?? []);
         setLoading(false);
       })
@@ -97,6 +118,7 @@ export default function EditStudioForm({ id }: { id: string }) {
       );
       return;
     }
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be smaller than 5 MB.");
       return;
@@ -130,7 +152,7 @@ export default function EditStudioForm({ id }: { id: string }) {
       return;
     }
     if (!image) {
-      toast.error("Please upload an image or paste an image URL.");
+      toast.error("Please upload an image or provide an image URL.");
       return;
     }
     if (amenities.length === 0) {
@@ -147,6 +169,7 @@ export default function EditStudioForm({ id }: { id: string }) {
       maxCapacity: Number(form.get("maxCapacity")),
       location: String(form.get("location")),
       image,
+      images: [image],
       amenities,
       overview: String(form.get("overview")),
     };
@@ -158,13 +181,14 @@ export default function EditStudioForm({ id }: { id: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         toast.error(data.message ?? "Could not update the studio.");
         return;
       }
-      toast.success("Studio updated successfully!");
+      toast.success("Studio workspace updated successfully!");
       router.push("/my-listings");
+      router.refresh();
     } catch {
       toast.error("Could not reach the server. Please try again.");
     } finally {
@@ -172,260 +196,416 @@ export default function EditStudioForm({ id }: { id: string }) {
     }
   };
 
-  const input =
-    "w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
-  const readOnly = `${input} bg-slate-100 dark:bg-slate-800 cursor-not-allowed`;
-  const label = "mb-1 block text-sm font-medium";
-
-  if (isPending || loading) {
+  if (isSessionPending || loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center text-slate-500">
-        Loading studio details...
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-semibold text-slate-500">
+          Loading studio details...
+        </p>
       </div>
     );
   }
 
   if (error || !studio) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p className="font-medium">{error || "Studio not found."}</p>
+      <div className="max-w-lg mx-auto my-16 p-8 rounded-3xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 text-center space-y-4">
+        <FiAlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          Studio Not Found
+        </h2>
+        <p className="text-xs text-slate-500">
+          {error || "We could not find this studio listing."}
+        </p>
+        <button
+          onClick={() => router.push("/my-listings")}
+          className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold"
+        >
+          Return to My Listings
+        </button>
       </div>
     );
   }
 
-  // UI স্তরের পরীক্ষা; আসল সুরক্ষা server-এ
-  if (session?.user.email !== studio.ownerEmail) {
+  // Security guard for host verification
+  if (session?.user?.email !== studio.ownerEmail) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p className="font-medium">You can only edit studios that you host.</p>
+      <div className="max-w-lg mx-auto my-16 p-8 rounded-3xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 text-center space-y-3">
+        <FiShield className="w-10 h-10 text-amber-500 mx-auto" />
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          Permission Denied
+        </h2>
+        <p className="text-xs text-slate-600 dark:text-slate-400">
+          You can only edit creative spaces that are published under your host
+          account.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-      <h1 className="text-3xl font-bold">Update Studio</h1>
-      <p className="mt-2 text-slate-600 dark:text-slate-400">
-        Keep your listing accurate so creators can book with confidence.
-      </p>
+    <div className="relative min-h-screen bg-slate-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 py-12 sm:py-16">
+      {/* Decorative ambient background glow */}
+      <div
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-225 h-96 bg-linear-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-600/15 dark:via-purple-600/15 dark:to-pink-600/15 blur-3xl opacity-75"
+        aria-hidden="true"
+      />
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <div>
-          <label className={label}>Studio title</label>
-          <input
-            name="title"
-            required
-            defaultValue={studio.title}
-            className={input}
-          />
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+            <FiEdit3 className="w-3.5 h-3.5" /> Workspace Settings
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+            Update Studio Listing
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+            Keep your amenities, rate cards, and photos up to date so creators
+            can book with confidence.
+          </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className={label}>Category</label>
-            <select
-              name="category"
-              required
-              defaultValue={studio.category}
-              className={`${input} bg-white dark:bg-slate-900`}
-            >
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={label}>Location / address</label>
-            <input
-              name="location"
-              required
-              defaultValue={studio.location}
-              className={input}
-            />
-          </div>
-        </div>
+        {/* Edit Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 sm:p-10 rounded-3xl border border-slate-200/90 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl shadow-xl space-y-8"
+        >
+          {/* General Specs */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+              General Studio Information
+            </h2>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <label className={label}>Hourly rate ($)</label>
-            <input
-              name="hourlyRate"
-              type="number"
-              min="1"
-              step="0.01"
-              required
-              defaultValue={studio.hourlyRate}
-              className={input}
-            />
-          </div>
-          <div>
-            <label className={label}>Security deposit ($)</label>
-            <input
-              name="securityDeposit"
-              type="number"
-              min="0"
-              step="0.01"
-              required
-              defaultValue={studio.securityDeposit}
-              className={input}
-            />
-          </div>
-          <div>
-            <label className={label}>Max capacity</label>
-            <input
-              name="maxCapacity"
-              type="number"
-              min="1"
-              required
-              defaultValue={studio.maxCapacity}
-              className={input}
-            />
-          </div>
-        </div>
-
-        {/* Image */}
-        <div>
-          <label className={label}>Studio image</label>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-400 dark:border-slate-600 px-4 py-2 text-sm font-medium hover:border-indigo-500">
-              <FiUploadCloud className="h-4 w-4" />
-              {uploading ? "Uploading..." : "Upload new image"}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Studio Title *
+              </label>
               <input
-                type="file"
-                accept="image/*"
-                onChange={handleUpload}
-                disabled={uploading}
-                className="hidden"
+                name="title"
+                type="text"
+                required
+                defaultValue={studio.title}
+                className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
               />
-            </label>
-            <input
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              type="url"
-              placeholder="...or paste an image URL"
-              className={input}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Category *
+                </label>
+                <div className="relative">
+                  <select
+                    name="category"
+                    required
+                    defaultValue={studio.category}
+                    className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition cursor-pointer appearance-none"
+                  >
+                    {categories.map((c) => (
+                      <option key={c} value={c} className="dark:bg-slate-900">
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <FiTag className="absolute right-4 top-3.5 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Max Capacity (Persons) *
+                </label>
+                <div className="relative">
+                  <input
+                    name="maxCapacity"
+                    type="number"
+                    min="1"
+                    required
+                    defaultValue={studio.maxCapacity}
+                    className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  />
+                  <FiUsers className="absolute left-3.5 top-3.5 text-slate-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing & Location */}
+          <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+              Pricing & Location
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Hourly Rate ($ USD) *
+                </label>
+                <div className="relative">
+                  <input
+                    name="hourlyRate"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    required
+                    defaultValue={studio.hourlyRate}
+                    className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  />
+                  <FiDollarSign className="absolute left-3.5 top-3.5 text-slate-400" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Security Deposit ($ USD) *
+                </label>
+                <div className="relative">
+                  <input
+                    name="securityDeposit"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    defaultValue={studio.securityDeposit}
+                    className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  />
+                  <FiShield className="absolute left-3.5 top-3.5 text-slate-400" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Location / Full Address *
+              </label>
+              <div className="relative">
+                <input
+                  name="location"
+                  type="text"
+                  required
+                  defaultValue={studio.location}
+                  className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                />
+                <FiMapPin className="absolute left-3.5 top-3.5 text-slate-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Photo Showcase & Live Preview */}
+          <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+              Workspace Imagery
+            </h2>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-5 py-3 text-xs font-semibold hover:border-indigo-500 transition shrink-0 bg-slate-50/50 dark:bg-slate-800/40">
+                <FiUploadCloud className="h-4 w-4 text-indigo-500" />
+                <span>
+                  {uploading ? "Uploading to ImgBB..." : "Upload New Image"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpload}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+
+              <div className="relative flex-1">
+                <input
+                  value={image}
+                  onChange={(e) => setImage(e.target.value)}
+                  type="url"
+                  placeholder="...or paste a direct image URL"
+                  className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                />
+                <FiImage className="absolute left-3.5 top-3.5 text-slate-400" />
+              </div>
+            </div>
+
+            {image && (
+              <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
+                <p className="text-xs font-semibold text-slate-500 mb-2">
+                  Thumbnail Preview
+                </p>
+                <div className="relative h-48 w-full sm:w-80 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={image}
+                    alt="Studio preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800";
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Amenities Management */}
+          <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                Amenities
+              </h2>
+              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                {amenities.length} selected
+              </span>
+            </div>
+
+            {/* Presets */}
+            <div className="flex flex-wrap gap-2">
+              {defaultAmenities.map((a) => {
+                const active = amenities.includes(a);
+                return (
+                  <button
+                    type="button"
+                    key={a}
+                    onClick={() => toggleAmenity(a)}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                      active
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                        : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                    }`}
+                  >
+                    {active && <FiCheck className="w-3 h-3" />}
+                    <span>{a}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Amenity Adder */}
+            <div className="flex gap-2 pt-2">
+              <input
+                value={customAmenity}
+                onChange={(e) => setCustomAmenity(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomAmenity();
+                  }
+                }}
+                placeholder="Add a custom amenity (e.g. Fog Machine, C-Stands)"
+                className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              />
+              <button
+                type="button"
+                onClick={addCustomAmenity}
+                className="inline-flex items-center gap-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold hover:border-indigo-500 transition cursor-pointer"
+              >
+                <FiPlus className="w-3.5 h-3.5" />
+                <span>Add</span>
+              </button>
+            </div>
+
+            {/* Custom Amenities Active Badges */}
+            {amenities.filter((a) => !defaultAmenities.includes(a)).length >
+              0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {amenities
+                  .filter((a) => !defaultAmenities.includes(a))
+                  .map((a) => (
+                    <span
+                      key={a}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200/60 dark:border-indigo-800/60"
+                    >
+                      <span>{a}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleAmenity(a)}
+                        aria-label={`Remove ${a}`}
+                        className="hover:text-rose-500 transition cursor-pointer"
+                      >
+                        <FiX className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Overview */}
+          <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+              Detailed Studio Overview
+            </h2>
+
+            <textarea
+              name="overview"
+              required
+              rows={4}
+              defaultValue={studio.overview}
+              className="w-full p-4 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
           </div>
-          {image && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={image}
-              alt="Studio preview"
-              className="mt-3 h-40 w-full rounded-xl object-cover sm:w-72"
-            />
-          )}
-        </div>
 
-        {/* Amenities */}
-        <div>
-          <label className={label}>Amenities</label>
-          <div className="flex flex-wrap gap-2">
-            {defaultAmenities.map((a) => {
-              const active = amenities.includes(a);
-              return (
-                <button
-                  type="button"
-                  key={a}
-                  onClick={() => toggleAmenity(a)}
-                  className={`rounded-full border px-3 py-1 text-sm transition cursor-pointer ${
-                    active
-                      ? "border-indigo-600 bg-indigo-600 text-white"
-                      : "border-slate-300 dark:border-slate-700 hover:border-indigo-500"
-                  }`}
-                >
-                  {a}
-                </button>
-              );
-            })}
+          {/* Read-Only Host Credentials */}
+          <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 grid sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900">
+                <FiUser className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                  Host Name (Read-Only)
+                </p>
+                <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                  {studio.ownerName || "Alam Creator"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900">
+                <FiMail className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                  Host Email (Read-Only)
+                </p>
+                <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                  {studio.ownerEmail || "alam@studiospace.io"}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-3 flex gap-2">
-            <input
-              value={customAmenity}
-              onChange={(e) => setCustomAmenity(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addCustomAmenity();
-                }
-              }}
-              placeholder="Add a custom amenity"
-              className={input}
-            />
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={addCustomAmenity}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 text-sm font-medium hover:border-indigo-500 cursor-pointer"
+              onClick={() => router.push("/my-listings")}
+              className="flex-1 py-3 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
-              Add
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || uploading}
+              className="flex-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>Save Listing Changes</span>
+                  <FiArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
-
-          {amenities.filter((a) => !defaultAmenities.includes(a)).length >
-            0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {amenities
-                .filter((a) => !defaultAmenities.includes(a))
-                .map((a) => (
-                  <span
-                    key={a}
-                    className="flex items-center gap-1 rounded-full bg-indigo-100 dark:bg-indigo-950 px-3 py-1 text-sm text-indigo-700 dark:text-indigo-300"
-                  >
-                    {a}
-                    <button
-                      type="button"
-                      onClick={() => toggleAmenity(a)}
-                      aria-label={`Remove ${a}`}
-                      className="cursor-pointer"
-                    >
-                      <FiX className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
-                ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <label className={label}>Detailed overview</label>
-          <textarea
-            name="overview"
-            required
-            rows={5}
-            defaultValue={studio.overview}
-            className={input}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className={label}>Host name</label>
-            <input value={studio.ownerName} readOnly className={readOnly} />
-          </div>
-          <div>
-            <label className={label}>Host email</label>
-            <input value={studio.ownerEmail} readOnly className={readOnly} />
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => router.push("/my-listings")}
-            className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 py-3 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            disabled={submitting || uploading}
-            className="flex-1 rounded-lg bg-indigo-600 py-3 font-medium text-white hover:bg-indigo-700 disabled:opacity-60 cursor-pointer"
-          >
-            {submitting ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
