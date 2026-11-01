@@ -1,22 +1,24 @@
 "use client";
+
 import Link from "next/link";
-import { FiMapPin, FiStar } from "react-icons/fi";
+import { FiMapPin, FiStar, FiHeart } from "react-icons/fi";
 import type { Studio } from "@/lib/types";
-import { FiHeart } from "react-icons/fi";
 import { useWishlist } from "./WishlistProvider";
 
 export default function StudioCard({ studio }: { studio: Studio }) {
   const { ids, toggle } = useWishlist();
   const saved = ids.includes(studio._id);
+
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-lg transition">
-      <div className="relative h-52 w-full">
+    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="relative h-52 w-full overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={studio.image}
           alt={studio.title}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
         />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950/50 to-transparent" />
         <span className="absolute left-3 top-3 rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium text-white">
           {studio.category}
         </span>
@@ -31,7 +33,11 @@ export default function StudioCard({ studio }: { studio: Studio }) {
           className="absolute right-3 top-12 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 cursor-pointer"
         >
           <FiHeart
-            className={`h-4 w-4 ${saved ? "fill-red-500 text-red-500" : "text-slate-600 dark:text-slate-300"}`}
+            className={`h-4 w-4 ${
+              saved
+                ? "fill-red-500 text-red-500"
+                : "text-slate-600 dark:text-slate-300"
+            }`}
           />
         </button>
       </div>

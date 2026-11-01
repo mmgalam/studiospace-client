@@ -195,7 +195,7 @@ export default function Navbar() {
               {dropdownOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-2"
+                  className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-2"
                 >
                   <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                     <p className="text-sm font-semibold truncate">
@@ -210,7 +210,11 @@ export default function Navbar() {
                       key={href}
                       href={href}
                       onClick={closeMenus}
-                      className={itemClass}
+                      className={`${itemClass} ${
+                        isActive(href)
+                          ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
+                          : ""
+                      }`}
                     >
                       <Icon className="w-4 h-4" /> {label}
                     </Link>

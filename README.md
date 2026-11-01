@@ -16,6 +16,7 @@ StudioSpace is a peer-to-peer marketplace where creators discover, filter and re
 - Secure auth: BetterAuth (email/password and Google) with JWT stored in HTTPOnly cookies; mutations return 401 when unauthorized
 - Light and dark theme toggle, skeleton loaders, custom 404 page and toast notifications throughout
 - Fully responsive layout for mobile, tablet and desktop
+- Downloadable PDF invoice for confirmed bookings
 
 ## Tech Stack
 

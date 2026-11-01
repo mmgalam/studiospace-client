@@ -4,6 +4,9 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import Footer from "@/components/Footer";
 import WishlistProvider from "@/components/WishlistProvider";
+import { Plus_Jakarta_Sans } from "next/font/google";
+
+const font = Plus_Jakarta_Sans({ subsets: ["latin"], display: "swap" });
 
 export const metadata = {
   title: "StudioSpace — Book Creative Studios",
@@ -18,7 +21,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <body
+        className={`${font.className} bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100`}
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <WishlistProvider>
             <Navbar />
